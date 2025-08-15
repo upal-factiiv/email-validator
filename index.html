@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Validator - Comprehensive Email Validation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            animation: {
+              "spin-slow": "spin 2s linear infinite",
+              "pulse-glow": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body
+    class="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen"
+  >
+    <div class="container mx-auto px-4 py-8">
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <div
+          class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-4"
+        >
+          <i class="fas fa-envelope text-white text-2xl"></i>
+        </div>
+        <h1
+          class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2"
+        >
+          Email Validator
+        </h1>
+        <p class="text-gray-600 text-lg">
+          Comprehensive email validation with format, MX records, and SMTP
+          deliverability checks
+        </p>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="max-w-4xl mx-auto mb-8">
+        <div class="flex flex-wrap justify-center gap-4">
+          <button
+            id="singleValidationTab"
+            class="px-6 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+          >
+            Single Email
+          </button>
+          <button
+            id="batchValidationTab"
+            class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+          >
+            Batch Validation
+          </button>
+          <a
+            href="/deliverable-emails"
+            class="px-6 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors"
+          >
+            View Deliverable
+          </a>
+
+          <a
+            href="/download-deliverable-csv"
+            class="px-6 py-2 bg-purple-500 text-white rounded-lg font-semibold hover:bg-purple-600 transition-colors"
+          >
+            Download CSV
+          </a>
+
+          <a
+            href="/batches"
+            class="px-6 py-2 bg-indigo-500 text-white rounded-lg font-semibold hover:bg-indigo-600 transition-colors"
+          >
+            View Batches
+          </a>
+        </div>
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="max-w-2xl mx-auto">
+        <!-- Single Email Validation Section -->
+        <div id="singleValidationSection">
+          <div
+            class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
+          >
+            <!-- Form Section -->
+            <div class="p-8">
+              <form id="emailForm" class="space-y-6">
+                <div>
+                  <label
+                    for="email"
+                    class="block text-sm font-semibold text-gray-700 mb-2"
+                  >
+                    Email Address
+                  </label>
+                  <div class="relative">
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      placeholder="Enter email address to validate"
+                      class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-lg"
+                      required
+                    />
+                    <i
+                      class="fas fa-at absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    ></i>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  id="validateBtn"
+                  class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold text-lg hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  <span id="btnText">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Validate Email
+                  </span>
+                  <span id="btnLoader" class="hidden">
+                    <i class="fas fa-spinner animate-spin mr-2"></i>
+                    Validating...
+                  </span>
+                </button>
+              </form>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results" class="hidden border-t border-gray-100">
+              <div class="p-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                  Validation Results
+                </h3>
+
+                <!-- Email Display -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                  <div class="flex items-center">
+                    <i class="fas fa-envelope text-gray-500 mr-3"></i>
+                    <span class="font-mono text-lg" id="validatedEmail"></span>
+                  </div>
+                </div>
+
+                <!-- Status Checks -->
+                <div class="space-y-4">
+                  <!-- Format Check -->
+                  <div
+                    class="flex items-center justify-between p-4 rounded-lg border"
+                    id="formatCheck"
+                  >
+                    <div class="flex items-center">
+                      <i class="fas fa-code text-blue-500 mr-3"></i>
+                      <div>
+                        <h4 class="font-semibold text-gray-800">
+                          Format Validation
+                        </h4>
+                        <p class="text-sm text-gray-600">
+                          RFC 5322 compliant format check
+                        </p>
+                      </div>
+                    </div>
+                    <div id="formatStatus" class="flex items-center"></div>
+                  </div>
+
+                  <!-- MX Record Check -->
+                  <div
+                    class="flex items-center justify-between p-4 rounded-lg border"
+                    id="mxCheck"
+                  >
+                    <div class="flex items-center">
+                      <i class="fas fa-server text-purple-500 mr-3"></i>
+                      <div>
+                        <h4 class="font-semibold text-gray-800">MX Records</h4>
+                        <p class="text-sm text-gray-600">
+                          Domain mail server availability
+                        </p>
+                      </div>
+                    </div>
+                    <div id="mxStatus" class="flex items-center"></div>
+                  </div>
+
+                  <!-- SMTP Deliverability -->
+                  <div
+                    class="flex items-center justify-between p-4 rounded-lg border"
+                    id="smtpCheck"
+                  >
+                    <div class="flex items-center">
+                      <i class="fas fa-paper-plane text-green-500 mr-3"></i>
+                      <div>
+                        <h4 class="font-semibold text-gray-800">
+                          SMTP Deliverability
+                        </h4>
+                        <p class="text-sm text-gray-600">
+                          Real-time email deliverability test
+                        </p>
+                      </div>
+                    </div>
+                    <div id="smtpStatus" class="flex items-center"></div>
+                  </div>
+                </div>
+
+                <!-- Message -->
+                <div id="messageContainer" class="mt-6 p-4 rounded-lg">
+                  <div class="flex items-start">
+                    <i id="messageIcon" class="mt-1 mr-3"></i>
+                    <div>
+                      <h4 class="font-semibold mb-1" id="messageTitle"></h4>
+                      <p id="messageText" class="text-sm"></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Batch Validation Section -->
+        <div id="batchValidationSection" class="hidden">
+          <div
+            class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
+          >
+            <div class="p-8">
+              <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                Batch Email Validation
+              </h2>
+
+              <form id="batchForm" class="space-y-6">
+                <div>
+                  <label
+                    for="csvFile"
+                    class="block text-sm font-semibold text-gray-700 mb-2"
+                  >
+                    Upload CSV File
+                  </label>
+                  <div class="relative">
+                    <input
+                      type="file"
+                      id="csvFile"
+                      name="csvFile"
+                      accept=".csv"
+                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      required
+                    />
+                  </div>
+                  <p class="text-sm text-gray-500 mt-2">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    CSV file must contain an 'email' column with email addresses
+                    to validate
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  id="batchValidateBtn"
+                  class="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white py-3 px-6 rounded-lg font-semibold text-lg hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  <span id="batchBtnText">
+                    <i class="fas fa-upload mr-2"></i>
+                    Validate Batch
+                  </span>
+                  <span id="batchBtnLoader" class="hidden">
+                    <i class="fas fa-spinner animate-spin mr-2"></i>
+                    Processing...
+                  </span>
+                </button>
+              </form>
+            </div>
+
+            <!-- Batch Results Section -->
+            <div id="batchResults" class="hidden border-t border-gray-100">
+              <div class="p-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                  Batch Validation Results
+                </h3>
+
+                <!-- Batch Summary -->
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                  <div class="bg-blue-50 rounded-lg p-4 text-center">
+                    <div
+                      class="text-2xl font-bold text-blue-600"
+                      id="totalCount"
+                    >
+                      0
+                    </div>
+                    <div class="text-sm text-blue-800">Total Emails</div>
+                  </div>
+                  <div class="bg-green-50 rounded-lg p-4 text-center">
+                    <div
+                      class="text-2xl font-bold text-green-600"
+                      id="deliverableCount"
+                    >
+                      0
+                    </div>
+                    <div class="text-sm text-green-800">Deliverable</div>
+                  </div>
+                  <div class="bg-red-50 rounded-lg p-4 text-center">
+                    <div
+                      class="text-2xl font-bold text-red-600"
+                      id="nonDeliverableCount"
+                    >
+                      0
+                    </div>
+                    <div class="text-sm text-red-800">Non-deliverable</div>
+                  </div>
+                </div>
+
+                <!-- Download Options -->
+                <div class="flex gap-4 mb-6">
+                  <button
+                    id="downloadBatchBtn"
+                    class="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-green-600 transition-colors"
+                  >
+                    <i class="fas fa-download mr-2"></i>
+                    Download Deliverable CSV
+                  </button>
+                </div>
+
+                <!-- Results Preview -->
+                <div
+                  class="max-h-64 overflow-y-auto border border-gray-200 rounded-lg"
+                >
+                  <table class="w-full text-sm">
+                    <thead class="bg-gray-50 sticky top-0">
+                      <tr>
+                        <th class="px-4 py-2 text-left">Email</th>
+                        <th class="px-4 py-2 text-center">Status</th>
+                        <th class="px-4 py-2 text-left">Message</th>
+                      </tr>
+                    </thead>
+                    <tbody id="batchResultsTable"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Features Section (always visible) -->
+        <div class="grid md:grid-cols-3 gap-6 mt-8">
+          <div class="text-center p-6 bg-white rounded-xl shadow-md">
+            <div
+              class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4"
+            >
+              <i class="fas fa-shield-alt text-blue-600"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-2">Secure Validation</h3>
+            <p class="text-gray-600 text-sm">
+              RFC 5322 compliant format checking with secure SMTP testing
+            </p>
+          </div>
+          <div class="text-center p-6 bg-white rounded-xl shadow-md">
+            <div
+              class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4"
+            >
+              <i class="fas fa-bolt text-purple-600"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-2">Real-time Checks</h3>
+            <p class="text-gray-600 text-sm">
+              Live MX record validation and SMTP deliverability testing
+            </p>
+          </div>
+          <div class="text-center p-6 bg-white rounded-xl shadow-md">
+            <div
+              class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
+            >
+              <i class="fas fa-chart-line text-green-600"></i>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-2">
+              Comprehensive Reports
+            </h3>
+            <p class="text-gray-600 text-sm">
+              Detailed validation results with actionable insights
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("emailForm");
+        const emailInput = document.getElementById("email");
+        const validateBtn = document.getElementById("validateBtn");
+        const btnText = document.getElementById("btnText");
+        const btnLoader = document.getElementById("btnLoader");
+        const results = document.getElementById("results");
+
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const email = emailInput.value.trim();
+          if (!email) return;
+
+          // Show loading state
+          validateBtn.disabled = true;
+          btnText.classList.add("hidden");
+          btnLoader.classList.remove("hidden");
+          results.classList.add("hidden");
+
+          try {
+            const response = await fetch("/validate", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ email: email }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              displayResults(data);
+            } else {
+              throw new Error(data.detail || "Validation failed");
+            }
+          } catch (error) {
+            console.error("Error:", error);
+            showError(error.message);
+          } finally {
+            // Hide loading state
+            validateBtn.disabled = false;
+            btnText.classList.remove("hidden");
+            btnLoader.classList.add("hidden");
+          }
+        });
+
+        function displayResults(data) {
+          document.getElementById("validatedEmail").textContent = data.email;
+
+          // Update status indicators
+          updateStatus("formatStatus", data.format_valid);
+          updateStatus("mxStatus", data.mx_valid);
+          updateStatus("smtpStatus", data.deliverable);
+
+          // Update border colors
+          updateBorder("formatCheck", data.format_valid);
+          updateBorder("mxCheck", data.mx_valid);
+          updateBorder("smtpCheck", data.deliverable);
+
+          // Update message
+          updateMessage(data);
+
+          // Show results
+          results.classList.remove("hidden");
+          results.scrollIntoView({ behavior: "smooth" });
+        }
+
+        function updateStatus(elementId, isValid) {
+          const element = document.getElementById(elementId);
+          if (isValid) {
+            element.innerHTML =
+              '<i class="fas fa-check-circle text-green-500 text-xl"></i>';
+          } else {
+            element.innerHTML =
+              '<i class="fas fa-times-circle text-red-500 text-xl"></i>';
+          }
+        }
+
+        function updateBorder(elementId, isValid) {
+          const element = document.getElementById(elementId);
+          element.className = element.className.replace(/border-\w+-200/g, "");
+          if (isValid) {
+            element.classList.add("border-green-200", "bg-green-50");
+          } else {
+            element.classList.add("border-red-200", "bg-red-50");
+          }
+        }
+
+        function updateMessage(data) {
+          const container = document.getElementById("messageContainer");
+          const icon = document.getElementById("messageIcon");
+          const title = document.getElementById("messageTitle");
+          const text = document.getElementById("messageText");
+
+          if (data.deliverable) {
+            container.className =
+              "mt-6 p-4 rounded-lg bg-green-50 border border-green-200";
+            icon.className = "fas fa-check-circle text-green-500 mt-1 mr-3";
+            title.textContent = "Email is Valid!";
+            title.className = "font-semibold mb-1 text-green-800";
+            text.textContent = data.message;
+            text.className = "text-sm text-green-700";
+          } else {
+            container.className =
+              "mt-6 p-4 rounded-lg bg-red-50 border border-red-200";
+            icon.className =
+              "fas fa-exclamation-triangle text-red-500 mt-1 mr-3";
+            title.textContent = "Validation Issues";
+            title.className = "font-semibold mb-1 text-red-800";
+            text.textContent = data.message;
+            text.className = "text-sm text-red-700";
+          }
+        }
+
+        function showError(message) {
+          const container = document.getElementById("messageContainer");
+          const icon = document.getElementById("messageIcon");
+          const title = document.getElementById("messageTitle");
+          const text = document.getElementById("messageText");
+
+          container.className =
+            "mt-6 p-4 rounded-lg bg-red-50 border border-red-200";
+          icon.className = "fas fa-exclamation-circle text-red-500 mt-1 mr-3";
+          title.textContent = "Error";
+          title.className = "font-semibold mb-1 text-red-800";
+          text.textContent = message;
+          text.className = "text-sm text-red-700";
+
+          document.getElementById("validatedEmail").textContent =
+            emailInput.value;
+          results.classList.remove("hidden");
+          results.scrollIntoView({ behavior: "smooth" });
+        }
+
+        // Add some example emails on double click
+        emailInput.addEventListener("dblclick", () => {
+          const examples = [
+            "user@example.com",
+            "test@gmail.com",
+            "invalid@nonexistent-domain.com",
+            "admin@yourdomain.com",
+          ];
+          emailInput.value =
+            examples[Math.floor(Math.random() * examples.length)];
+        });
+
+        // Tab switching functionality
+        const singleValidationTab = document.getElementById(
+          "singleValidationTab"
+        );
+        const batchValidationTab =
+          document.getElementById("batchValidationTab");
+        const singleValidationSection = document.getElementById(
+          "singleValidationSection"
+        );
+        const batchValidationSection = document.getElementById(
+          "batchValidationSection"
+        );
+
+        console.log("Tab elements:", {
+          singleValidationTab,
+          batchValidationTab,
+          singleValidationSection,
+          batchValidationSection,
+        });
+
+        if (
+          singleValidationTab &&
+          batchValidationTab &&
+          singleValidationSection &&
+          batchValidationSection
+        ) {
+          singleValidationTab.addEventListener("click", () => {
+            console.log("Single validation tab clicked");
+            // Update tab styles
+            singleValidationTab.className =
+              "px-6 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors";
+            batchValidationTab.className =
+              "px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors";
+
+            // Show/hide sections
+            singleValidationSection.classList.remove("hidden");
+            batchValidationSection.classList.add("hidden");
+          });
+
+          batchValidationTab.addEventListener("click", () => {
+            console.log("Batch validation tab clicked");
+            // Update tab styles
+            batchValidationTab.className =
+              "px-6 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors";
+            singleValidationTab.className =
+              "px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors";
+
+            // Show/hide sections
+            batchValidationSection.classList.remove("hidden");
+            singleValidationSection.classList.add("hidden");
+          });
+        } else {
+          console.error("Some tab elements not found!", {
+            singleValidationTab: !!singleValidationTab,
+            batchValidationTab: !!batchValidationTab,
+            singleValidationSection: !!singleValidationSection,
+            batchValidationSection: !!batchValidationSection,
+          });
+        }
+
+        // Batch validation functionality
+        const batchForm = document.getElementById("batchForm");
+        const csvFileInput = document.getElementById("csvFile");
+        const batchValidateBtn = document.getElementById("batchValidateBtn");
+        const batchBtnText = document.getElementById("batchBtnText");
+        const batchBtnLoader = document.getElementById("batchBtnLoader");
+        const batchResults = document.getElementById("batchResults");
+        let currentBatchId = null;
+
+        if (batchForm) {
+          batchForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const file = csvFileInput.files[0];
+            if (!file) return;
+
+            // Show loading state
+            batchValidateBtn.disabled = true;
+            batchBtnText.classList.add("hidden");
+            batchBtnLoader.classList.remove("hidden");
+            batchResults.classList.add("hidden");
+
+            try {
+              const formData = new FormData();
+              formData.append("file", file);
+
+              const response = await fetch("/batch-validate", {
+                method: "POST",
+                body: formData,
+              });
+
+              const data = await response.json();
+
+              if (response.ok) {
+                displayBatchResults(data);
+                currentBatchId = data.batch_id;
+              } else {
+                throw new Error(data.detail || "Batch validation failed");
+              }
+            } catch (error) {
+              console.error("Error:", error);
+              alert("Error: " + error.message);
+            } finally {
+              // Hide loading state
+              batchValidateBtn.disabled = false;
+              batchBtnText.classList.remove("hidden");
+              batchBtnLoader.classList.add("hidden");
+            }
+          });
+        }
+
+        function displayBatchResults(data) {
+          // Update summary counts
+          document.getElementById("totalCount").textContent = data.total_emails;
+          document.getElementById("deliverableCount").textContent =
+            data.deliverable_count;
+          document.getElementById("nonDeliverableCount").textContent =
+            data.non_deliverable_count;
+
+          // Populate results table
+          const tableBody = document.getElementById("batchResultsTable");
+          tableBody.innerHTML = "";
+
+          data.results.forEach((result) => {
+            const row = document.createElement("tr");
+            row.className = "border-t border-gray-100";
+
+            const statusIcon = result.deliverable
+              ? '<i class="fas fa-check-circle text-green-500"></i>'
+              : '<i class="fas fa-times-circle text-red-500"></i>';
+
+            const statusText = result.deliverable ? "Valid" : "Invalid";
+            const statusClass = result.deliverable
+              ? "text-green-600"
+              : "text-red-600";
+
+            row.innerHTML = `
+            <td class="px-4 py-2 font-mono text-sm">${result.email}</td>
+            <td class="px-4 py-2 text-center">
+              <div class="flex items-center justify-center gap-2">
+                ${statusIcon}
+                <span class="font-semibold ${statusClass}">${statusText}</span>
+              </div>
+            </td>
+            <td class="px-4 py-2 text-sm text-gray-600">${result.message}</td>
+          `;
+
+            tableBody.appendChild(row);
+          });
+
+          // Show results
+          batchResults.classList.remove("hidden");
+          batchResults.scrollIntoView({ behavior: "smooth" });
+        }
+
+        // Download batch deliverable CSV
+        const downloadBatchBtn = document.getElementById("downloadBatchBtn");
+        if (downloadBatchBtn) {
+          downloadBatchBtn.addEventListener("click", () => {
+            if (currentBatchId) {
+              window.open(
+                `/download-batch-deliverable/${currentBatchId}`,
+                "_blank"
+              );
+            } else {
+              alert("No batch data available for download");
+            }
+          });
+        }
+      }); // End of DOMContentLoaded
+    </script>
+  </body>
+</html>
